@@ -1,0 +1,343 @@
+/* =========================
+   问题单追踪器 - 样式
+   ========================= */
+
+/* --- 标题栏 & 统计 --- */
+.issue-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.4em;
+  color: var(--text-normal);
+}
+
+.issue-stats {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+}
+
+/* --- 工具栏 --- */
+.issue-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.issue-toolbar button {
+  cursor: pointer;
+}
+
+/* --- 筛选栏 --- */
+.issue-filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.issue-search-input {
+  flex: 1;
+  min-width: 180px;
+  padding: 6px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 0.9em;
+}
+
+.issue-filter-select {
+  padding: 6px 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 0.9em;
+  cursor: pointer;
+}
+
+/* --- 表格 --- */
+.issue-table-container {
+  overflow-x: auto;
+}
+
+.issue-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.issue-table th {
+  background: var(--background-secondary);
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--background-modifier-border);
+  white-space: nowrap;
+}
+
+.issue-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  vertical-align: middle;
+}
+
+.issue-table tbody tr:hover {
+  background: var(--background-primary-alt);
+}
+
+.issue-cell-title {
+  font-weight: 500;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- 状态标签 --- */
+.issue-status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.85em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.issue-status-待处理 {
+  background: #fef3cd;
+  color: #856404;
+}
+
+.issue-status-处理中 {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.issue-status-已解决 {
+  background: #d4edda;
+  color: #155724;
+}
+
+.issue-status-已关闭 {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+/* --- 影响生产标签 --- */
+.issue-prod-yes {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.85em;
+  font-weight: 500;
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.issue-prod-no {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.85em;
+  font-weight: 500;
+  background: #d4edda;
+  color: #155724;
+}
+
+/* --- 操作按钮 --- */
+.issue-action-cell {
+  white-space: nowrap;
+}
+
+.issue-btn-sm {
+  padding: 2px 8px;
+  font-size: 0.8em;
+  margin-right: 4px;
+  cursor: pointer;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.issue-btn-sm:hover {
+  background: var(--background-modifier-hover);
+}
+
+.issue-btn-danger {
+  color: #c7254e;
+  border-color: #c7254e;
+}
+
+.issue-btn-danger:hover {
+  background: #fce4ec;
+}
+
+/* --- 空状态 --- */
+.issue-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 1em;
+}
+
+/* --- Modal 表单 --- */
+.issue-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.issue-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.issue-field-label {
+  font-weight: 600;
+  font-size: 0.9em;
+  color: var(--text-normal);
+}
+
+.issue-field-input input,
+.issue-field-input select,
+.issue-field-input textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 0.9em;
+  box-sizing: border-box;
+}
+
+.issue-field-input textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+}
+
+.issue-form-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* --- 详情弹窗 --- */
+.issue-detail-modal {
+  max-width: 600px;
+}
+
+.issue-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.issue-detail-row {
+  display: flex;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.issue-detail-label {
+  font-weight: 600;
+  min-width: 90px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+
+.issue-detail-value {
+  color: var(--text-normal);
+  font-size: 0.9em;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* --- 订单多行展示 --- */
+.issue-cell-orders {
+  min-width: 120px;
+  line-height: 1.6;
+}
+
+/* --- 订单分组表单 --- */
+.issue-orders-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.issue-order-entry {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--background-primary);
+}
+
+.issue-order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 0.9em;
+  color: var(--text-accent);
+}
+
+.issue-order-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.issue-inline-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.issue-inline-label {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  min-width: 32px;
+  flex-shrink: 0;
+}
+
+.issue-inline-field input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 0.85em;
+  box-sizing: border-box;
+}
+
+/* --- 订单多行展示 --- */
+.issue-cell-orders {
+  min-width: 140px;
+  line-height: 1.6;
+}
