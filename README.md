@@ -35,11 +35,15 @@
 3. 点击 **浏览**，搜索 "问题单追踪器"
 4. 点击 **安装**，然后 **启用**
 
-### 手动安装
+### 手动安装（社区上架前）
 
-1. 在 Releases 页面下载最新版本的 `main.js`、`manifest.json`、`styles.css`
-2. 将这些文件放入你的 Obsidian Vault 的 `.obsidian/plugins/issue-tracker/` 目录
-3. 在 Obsidian 设置中启用插件
+> **注意**：Release 页面有两个下载链接，请务必下载 **附件 ZIP**（`obsidian-issue-tracker-v*.zip`），不要下载 "Source code (zip)"。
+
+1. 打开 [Releases 页面](https://github.com/emojia/obsidian-issue-tracker/releases)
+2. 找到最新版本，在 **Assets** 下方点击下载 `obsidian-issue-tracker-v*.zip`
+3. 将 ZIP 解压，得到 `main.js`、`manifest.json`、`styles.css` 三个文件
+4. 将这三个文件放入你的 Obsidian Vault 的 `.obsidian/plugins/issue-tracker/` 目录（如文件夹不存在则手动创建）
+5. 在 Obsidian 设置 → 第三方插件中启用
 
 ### 使用
 

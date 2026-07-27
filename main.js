@@ -344,9 +344,11 @@ var IssueTrackerView = class extends import_obsidian.ItemView {
       ];
       headers.forEach((h) => headerRow.createEl("th", { text: h }));
       const tbody = table.createEl("tbody");
-      filtered.sort(
-        (a, b) => (0, import_obsidian.moment)(b.updatedAt).valueOf() - (0, import_obsidian.moment)(a.updatedAt).valueOf()
-      ).forEach((issue) => {
+      filtered.sort((a, b) => {
+        const statusOrder = (s) => s === "\u5DF2\u89E3\u51B3" || s === "\u5DF2\u5173\u95ED" ? 1 : 0;
+        const cmp = statusOrder(a.status) - statusOrder(b.status);
+        return cmp !== 0 ? cmp : (0, import_obsidian.moment)(b.updatedAt).valueOf() - (0, import_obsidian.moment)(a.updatedAt).valueOf();
+      }).forEach((issue) => {
         const row = tbody.createEl("tr");
         row.createEl("td", { text: issue.title, cls: "issue-cell-title" });
         row.createEl("td", { text: issue.discoverer });
@@ -466,16 +468,20 @@ var IssueTrackerView = class extends import_obsidian.ItemView {
 `;
     md += `|------|--------|------------|------|----------|----------|----------|
 `;
-    issues.sort(
-      (a, b) => (0, import_obsidian.moment)(b.updatedAt).valueOf() - (0, import_obsidian.moment)(a.updatedAt).valueOf()
-    ).forEach((i) => {
+    issues.sort((a, b) => {
+      const statusOrder = (s) => s === "\u5DF2\u89E3\u51B3" || s === "\u5DF2\u5173\u95ED" ? 1 : 0;
+      const cmp = statusOrder(a.status) - statusOrder(b.status);
+      return cmp !== 0 ? cmp : (0, import_obsidian.moment)(b.updatedAt).valueOf() - (0, import_obsidian.moment)(a.updatedAt).valueOf();
+    }).forEach((i) => {
       md += `| ${i.title} | ${i.discoverer} | ${i.orders.map((o) => o.orderNo + "\uFF08\u5BA2\u6237:" + (o.customer || "-") + " \u578B\u53F7:" + (o.model || "-") + " \u6570\u91CF:" + (o.quantity || "-") + "\uFF09").join("<br>") || "-"} | ${i.status} | ${i.affectsProduction ? "\u662F" : "\u5426"} | ${i.solution || "-"} | ${i.createdAt} |
 `;
     });
     md += "\n---\n\n## \u95EE\u9898\u8BE6\u60C5\n\n";
-    issues.sort(
-      (a, b) => (0, import_obsidian.moment)(b.updatedAt).valueOf() - (0, import_obsidian.moment)(a.updatedAt).valueOf()
-    ).forEach((i, idx) => {
+    issues.sort((a, b) => {
+      const statusOrder = (s) => s === "\u5DF2\u89E3\u51B3" || s === "\u5DF2\u5173\u95ED" ? 1 : 0;
+      const cmp = statusOrder(a.status) - statusOrder(b.status);
+      return cmp !== 0 ? cmp : (0, import_obsidian.moment)(b.updatedAt).valueOf() - (0, import_obsidian.moment)(a.updatedAt).valueOf();
+    }).forEach((i, idx) => {
       md += `### ${idx + 1}. ${i.title}
 
 `;

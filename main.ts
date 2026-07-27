@@ -502,12 +502,16 @@ class IssueTrackerView extends ItemView {
 
       // tbody
       const tbody = table.createEl("tbody");
-      // 按更新时间降序排列
+      // 排序：未解决（待处理/处理中）在上，已解决/已关闭在下；各组内按更新时间降序
       filtered
-        .sort(
-          (a, b) =>
-            moment(b.updatedAt).valueOf() - moment(a.updatedAt).valueOf()
-        )
+        .sort((a, b) => {
+          const statusOrder = (s: string) =>
+            s === "已解决" || s === "已关闭" ? 1 : 0;
+          const cmp = statusOrder(a.status) - statusOrder(b.status);
+          return cmp !== 0
+            ? cmp
+            : moment(b.updatedAt).valueOf() - moment(a.updatedAt).valueOf();
+        })
         .forEach((issue) => {
           const row = tbody.createEl("tr");
 
@@ -656,22 +660,32 @@ class IssueTrackerView extends ItemView {
     md += `| 标题 | 发现人 | 受影响订单 | 进度 | 影响生产 | 解决方案 | 创建时间 |\n`;
     md += `|------|--------|------------|------|----------|----------|----------|\n`;
 
+    // 排序：未解决在上，已解决/已关闭在下；各组内按更新时间降序
     issues
-      .sort(
-        (a, b) =>
-          moment(b.updatedAt).valueOf() - moment(a.updatedAt).valueOf()
-      )
+      .sort((a, b) => {
+        const statusOrder = (s: string) =>
+          s === "已解决" || s === "已关闭" ? 1 : 0;
+        const cmp = statusOrder(a.status) - statusOrder(b.status);
+        return cmp !== 0
+          ? cmp
+          : moment(b.updatedAt).valueOf() - moment(a.updatedAt).valueOf();
+      })
       .forEach((i) => {
         md += `| ${i.title} | ${i.discoverer} | ${i.orders.map(o => o.orderNo + "（客户:" + (o.customer || "-") + " 型号:" + (o.model || "-") + " 数量:" + (o.quantity || "-") + "）").join("<br>") || "-"} | ${i.status} | ${i.affectsProduction ? "是" : "否"} | ${i.solution || "-"} | ${i.createdAt} |\n`;
       });
 
     // 附加详细内容
     md += "\n---\n\n## 问题详情\n\n";
+    // 排序：未解决在上，已解决/已关闭在下；各组内按更新时间降序
     issues
-      .sort(
-        (a, b) =>
-          moment(b.updatedAt).valueOf() - moment(a.updatedAt).valueOf()
-      )
+      .sort((a, b) => {
+        const statusOrder = (s: string) =>
+          s === "已解决" || s === "已关闭" ? 1 : 0;
+        const cmp = statusOrder(a.status) - statusOrder(b.status);
+        return cmp !== 0
+          ? cmp
+          : moment(b.updatedAt).valueOf() - moment(a.updatedAt).valueOf();
+      })
       .forEach((i, idx) => {
         md += `### ${idx + 1}. ${i.title}\n\n`;
         md += `- **问题ID**: ${i.id}\n`;
