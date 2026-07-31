@@ -31,6 +31,7 @@ interface Issue {
   discoverer: string;
   relatedPeople: string;
   orders: OrderEntry[];
+  images: string[];
   status: "待处理" | "处理中" | "已解决" | "已关闭";
   affectsProduction: boolean;
   solution: string;
@@ -107,6 +108,10 @@ class IssueModal extends Modal {
   private relatedInput: HTMLInputElement;
   private ordersContainer: HTMLDivElement;
   private ordersData: OrderEntry[];
+  private imagesContainer: HTMLDivElement;
+  private imagesData: string[];
+  private fileInput: HTMLInputElement;
+  private cameraInput: HTMLInputElement;
   private statusSelect: HTMLSelectElement;
   private affectsCheckbox: HTMLInputElement;
   private solutionTextarea: HTMLTextAreaElement;
@@ -174,7 +179,11 @@ class IssueModal extends Modal {
     ordersField.createEl("label", { text: "受影响订单", cls: "issue-field-label" });
     this.ordersContainer = ordersField.createDiv({ cls: "issue-orders-container" });
 
-    // 初始化订单数据
+    // 初始化图片数据
+    this.imagesData = this.issue?.images
+      ? this.issue.images.map((p) => p)
+      : [];
+
     this.ordersData = this.issue
       ? this.issue.orders.map((o) => ({ ...o }))
       : [];
@@ -267,6 +276,53 @@ class IssueModal extends Modal {
       if (this.issue) this.solutionTextarea.value = this.issue.solution;
     });
 
+
+    // 图片附件
+    this.createField(form, "图片附件", (container) => {
+      this.imagesContainer = container.createDiv({ cls: "issue-images-container" });
+
+      // 隐藏的文件选择器（上传本地图片）
+      this.fileInput = container.createEl("input", {
+        attr: { type: "file", accept: "image/*", multiple: "multiple" },
+      });
+      this.fileInput.style.display = "none";
+      this.fileInput.addEventListener("change", () => this.handleImageSelect());
+
+      // 隐藏的拍照输入（移动端打开相机）
+      this.cameraInput = container.createEl("input", {
+        attr: { type: "file", accept: "image/*", capture: "environment", multiple: "false" },
+      });
+      this.cameraInput.style.display = "none";
+      this.cameraInput.addEventListener("change", () => this.handleImageSelectFromCamera());
+
+      // 工具栏按钮组
+      const toolbar = container.createDiv({ cls: "issue-image-toolbar" });
+
+      const uploadBtn = toolbar.createEl("button", {
+        text: "📁 上传图片",
+        cls: "issue-btn-sm",
+      });
+      uploadBtn.addEventListener("click", () => this.fileInput.click());
+
+      const cameraBtn = toolbar.createEl("button", {
+        text: "📷 拍照",
+        cls: "issue-btn-sm",
+      });
+      cameraBtn.addEventListener("click", () => this.cameraInput.click());
+
+      const pasteHint = toolbar.createEl("span", {
+        text: "📋 或 Ctrl+V 粘贴",
+        cls: "issue-paste-hint",
+      });
+
+      // 为 modal 添加粘贴监听
+      this.modalEl.addEventListener("paste", (e: ClipboardEvent) => {
+        this.handlePasteImage(e);
+      });
+
+      // 渲染已有图片
+      this.renderImagePreviews();
+    });
     // Buttons
     const btnContainer = form.createDiv({ cls: "issue-form-buttons" });
     const saveBtn = btnContainer.createEl("button", {
@@ -321,6 +377,133 @@ class IssueModal extends Modal {
     return this.ordersData.filter((o) => o.orderNo.trim().length > 0);
   }
 
+  /** 处理图片选择（上传本地图片） */
+  private async handleImageSelect() {
+    const files = this.fileInput.files;
+    if (!files || files.length === 0) return;
+    await this.saveImageFiles(Array.from(files));
+    this.fileInput.value = "";
+  }
+
+  /** 处理拍照 */
+  private async handleImageSelectFromCamera() {
+    const files = this.cameraInput.files;
+    if (!files || files.length === 0) return;
+    await this.saveImageFiles(Array.from(files));
+    this.cameraInput.value = "";
+  }
+
+  /** 处理粘贴图片 */
+  private async handlePasteImage(e: ClipboardEvent) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          await this.saveImageFiles([file]);
+          new Notice("已粘贴图片");
+        }
+        break;
+      }
+    }
+  }
+
+  /** 通用：将文件列表保存到 Vault */
+  private async saveImageFiles(files: File[]) {
+    const vault = this.app.vault;
+    const imgFolder = normalizePath("问题单截图");
+    const folderExists = vault.getAbstractFileByPath(imgFolder);
+    if (!folderExists) {
+      await vault.createFolder(imgFolder);
+    }
+
+    for (const file of files) {
+      const reader = new FileReader();
+      const data = await new Promise<ArrayBuffer>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as ArrayBuffer);
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+
+      const ext = file.name?.split(".").pop() || "png";
+      const fileName = `issue_img_${Date.now()}_${Math.random().toString(36).substring(2, 6)}.${ext}`;
+      const filePath = normalizePath(`${imgFolder}/${fileName}`);
+
+      try {
+        await vault.createBinary(filePath, data);
+        this.imagesData.push(filePath);
+      } catch (e) {
+        new Notice(`图片保存失败: ${e.message}`);
+      }
+    }
+
+    this.renderImagePreviews();
+  }
+
+  /** 渲染图片预览 */
+  private renderImagePreviews() {
+    if (!this.imagesContainer) return;
+    this.imagesContainer.empty();
+
+    if (this.imagesData.length === 0) {
+      this.imagesContainer.createSpan({
+        text: "暂无截图，点击上方按钮添加",
+        cls: "issue-images-empty",
+      });
+      return;
+    }
+
+    this.imagesData.forEach((imgPath, idx) => {
+      const wrapper = this.imagesContainer.createDiv({ cls: "issue-image-wrapper" });
+
+      const img = wrapper.createEl("img", {
+        cls: "issue-image-thumb",
+      });
+
+      // 尝试获取可访问的资源路径
+      const file = this.app.vault.getAbstractFileByPath(imgPath);
+      if (file instanceof TFile) {
+        img.src = this.app.vault.getResourcePath(file);
+      }
+
+      img.addEventListener("click", () => {
+        // 点击放大查看
+        const modal = new Modal(this.app);
+        modal.onOpen = () => {
+          modal.contentEl.empty();
+          modal.contentEl.addClass("issue-image-preview-modal");
+          const fullImg = modal.contentEl.createEl("img", {
+            cls: "issue-image-full",
+          });
+          if (file instanceof TFile) {
+            fullImg.src = this.app.vault.getResourcePath(file);
+          }
+          fullImg.style.maxWidth = "100%";
+          fullImg.style.maxHeight = "90vh";
+          const closeBtn = modal.contentEl.createEl("button", {
+            text: "关闭", cls: "mod-cta",
+          });
+          closeBtn.style.marginTop = "10px";
+          closeBtn.addEventListener("click", () => modal.close());
+        };
+        modal.open();
+      });
+
+      const delBtn = wrapper.createEl("button", {
+        text: "删除",
+        cls: "issue-btn-sm issue-btn-danger",
+      });
+      delBtn.addEventListener("click", () => {
+        this.imagesData.splice(idx, 1);
+        this.renderImagePreviews();
+      });
+    });
+  }
+
   private saveIssue() {
     const title = this.titleInput.value.trim();
     const discoverer = this.discovererInput.value.trim();
@@ -341,6 +524,7 @@ class IssueModal extends Modal {
       discoverer,
       relatedPeople: this.relatedInput.value.trim(),
       orders: this.ordersData.filter((o) => o.orderNo.trim().length > 0),
+      images: this.imagesData,
       status: this.statusSelect.value as Issue["status"],
       affectsProduction: this.affectsCheckbox.checked,
       solution: this.solutionTextarea.value.trim(),
@@ -612,6 +796,40 @@ class IssueTrackerView extends ItemView {
       this.addDetailRow(detail, "相关人员", issue.relatedPeople || "无");
       this.addDetailRow(detail, "受影响订单", formatOrdersText(issue.orders));
       this.addDetailRow(detail, "解决进度", issue.status);
+
+      // 图片展示
+      if (issue.images && issue.images.length > 0) {
+        const imgRow = detail.createDiv({ cls: "issue-detail-row" });
+        imgRow.createEl("span", { text: "截图附件", cls: "issue-detail-label" });
+        const imgContainer = imgRow.createDiv({ cls: "issue-detail-images" });
+        issue.images.forEach((imgPath) => {
+          const wrapper = imgContainer.createDiv({ cls: "issue-detail-img-wrapper" });
+          const img = wrapper.createEl("img", { cls: "issue-detail-img" });
+          const file = this.app.vault.getAbstractFileByPath(imgPath);
+          if (file instanceof TFile) {
+            img.src = this.app.vault.getResourcePath(file);
+          }
+          img.addEventListener("click", () => {
+            const modal = new Modal(this.app);
+            modal.onOpen = () => {
+              modal.contentEl.empty();
+              modal.contentEl.addClass("issue-image-preview-modal");
+              const fullImg = modal.contentEl.createEl("img", { cls: "issue-image-full" });
+              if (file instanceof TFile) {
+                fullImg.src = this.app.vault.getResourcePath(file);
+              }
+              fullImg.style.maxWidth = "100%";
+              fullImg.style.maxHeight = "90vh";
+              const closeBtn = modal.contentEl.createEl("button", {
+                text: "关闭", cls: "mod-cta",
+              });
+              closeBtn.style.marginTop = "10px";
+              closeBtn.addEventListener("click", () => modal.close());
+            };
+            modal.open();
+          });
+        });
+      }
       this.addDetailRow(
         detail,
         "是否影响生产",
@@ -976,6 +1194,12 @@ export default class IssueTrackerPlugin extends Plugin {
       md += `- **影响生产**: ${issue.affectsProduction ? "是" : "否"}\n`;
       md += `- **创建时间**: ${issue.createdAt}\n`;
       md += `- **最后更新**: ${issue.updatedAt}\n`;
+        if (issue.images && issue.images.length > 0) {
+          md += `- **截图附件**:\n`;
+          issue.images.forEach((imgPath) => {
+            md += `  - ![](${imgPath})\n`;
+          });
+        }
 
       await this.app.vault.create(filePath, md);
     }

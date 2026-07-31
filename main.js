@@ -56,6 +56,7 @@ var IssueModal = class extends import_obsidian.Modal {
     this.isEdit = existingIssue !== null;
   }
   onOpen() {
+    var _a;
     const { contentEl } = this;
     contentEl.empty();
     contentEl.createEl("h2", {
@@ -97,6 +98,7 @@ var IssueModal = class extends import_obsidian.Modal {
     const ordersField = form.createDiv({ cls: "issue-field" });
     ordersField.createEl("label", { text: "\u53D7\u5F71\u54CD\u8BA2\u5355", cls: "issue-field-label" });
     this.ordersContainer = ordersField.createDiv({ cls: "issue-orders-container" });
+    this.imagesData = ((_a = this.issue) == null ? void 0 : _a.images) ? this.issue.images.map((p) => p) : [];
     this.ordersData = this.issue ? this.issue.orders.map((o) => ({ ...o })) : [];
     if (this.ordersData.length === 0) {
       this.ordersData.push({ orderNo: "", customer: "", model: "", quantity: "" });
@@ -168,6 +170,38 @@ var IssueModal = class extends import_obsidian.Modal {
       if (this.issue)
         this.solutionTextarea.value = this.issue.solution;
     });
+    this.createField(form, "\u56FE\u7247\u9644\u4EF6", (container) => {
+      this.imagesContainer = container.createDiv({ cls: "issue-images-container" });
+      this.fileInput = container.createEl("input", {
+        attr: { type: "file", accept: "image/*", multiple: "multiple" }
+      });
+      this.fileInput.style.display = "none";
+      this.fileInput.addEventListener("change", () => this.handleImageSelect());
+      this.cameraInput = container.createEl("input", {
+        attr: { type: "file", accept: "image/*", capture: "environment", multiple: "false" }
+      });
+      this.cameraInput.style.display = "none";
+      this.cameraInput.addEventListener("change", () => this.handleImageSelectFromCamera());
+      const toolbar = container.createDiv({ cls: "issue-image-toolbar" });
+      const uploadBtn = toolbar.createEl("button", {
+        text: "\u{1F4C1} \u4E0A\u4F20\u56FE\u7247",
+        cls: "issue-btn-sm"
+      });
+      uploadBtn.addEventListener("click", () => this.fileInput.click());
+      const cameraBtn = toolbar.createEl("button", {
+        text: "\u{1F4F7} \u62CD\u7167",
+        cls: "issue-btn-sm"
+      });
+      cameraBtn.addEventListener("click", () => this.cameraInput.click());
+      const pasteHint = toolbar.createEl("span", {
+        text: "\u{1F4CB} \u6216 Ctrl+V \u7C98\u8D34",
+        cls: "issue-paste-hint"
+      });
+      this.modalEl.addEventListener("paste", (e) => {
+        this.handlePasteImage(e);
+      });
+      this.renderImagePreviews();
+    });
     const btnContainer = form.createDiv({ cls: "issue-form-buttons" });
     const saveBtn = btnContainer.createEl("button", {
       text: this.isEdit ? "\u4FDD\u5B58\u4FEE\u6539" : "\u521B\u5EFA\u95EE\u9898\u5355",
@@ -205,6 +239,122 @@ var IssueModal = class extends import_obsidian.Modal {
   collectOrders() {
     return this.ordersData.filter((o) => o.orderNo.trim().length > 0);
   }
+  /** 处理图片选择（上传本地图片） */
+  async handleImageSelect() {
+    const files = this.fileInput.files;
+    if (!files || files.length === 0)
+      return;
+    await this.saveImageFiles(Array.from(files));
+    this.fileInput.value = "";
+  }
+  /** 处理拍照 */
+  async handleImageSelectFromCamera() {
+    const files = this.cameraInput.files;
+    if (!files || files.length === 0)
+      return;
+    await this.saveImageFiles(Array.from(files));
+    this.cameraInput.value = "";
+  }
+  /** 处理粘贴图片 */
+  async handlePasteImage(e) {
+    var _a;
+    const items = (_a = e.clipboardData) == null ? void 0 : _a.items;
+    if (!items)
+      return;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          await this.saveImageFiles([file]);
+          new import_obsidian.Notice("\u5DF2\u7C98\u8D34\u56FE\u7247");
+        }
+        break;
+      }
+    }
+  }
+  /** 通用：将文件列表保存到 Vault */
+  async saveImageFiles(files) {
+    var _a;
+    const vault = this.app.vault;
+    const imgFolder = (0, import_obsidian.normalizePath)("\u95EE\u9898\u5355\u622A\u56FE");
+    const folderExists = vault.getAbstractFileByPath(imgFolder);
+    if (!folderExists) {
+      await vault.createFolder(imgFolder);
+    }
+    for (const file of files) {
+      const reader = new FileReader();
+      const data = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+      const ext = ((_a = file.name) == null ? void 0 : _a.split(".").pop()) || "png";
+      const fileName = `issue_img_${Date.now()}_${Math.random().toString(36).substring(2, 6)}.${ext}`;
+      const filePath = (0, import_obsidian.normalizePath)(`${imgFolder}/${fileName}`);
+      try {
+        await vault.createBinary(filePath, data);
+        this.imagesData.push(filePath);
+      } catch (e) {
+        new import_obsidian.Notice(`\u56FE\u7247\u4FDD\u5B58\u5931\u8D25: ${e.message}`);
+      }
+    }
+    this.renderImagePreviews();
+  }
+  /** 渲染图片预览 */
+  renderImagePreviews() {
+    if (!this.imagesContainer)
+      return;
+    this.imagesContainer.empty();
+    if (this.imagesData.length === 0) {
+      this.imagesContainer.createSpan({
+        text: "\u6682\u65E0\u622A\u56FE\uFF0C\u70B9\u51FB\u4E0A\u65B9\u6309\u94AE\u6DFB\u52A0",
+        cls: "issue-images-empty"
+      });
+      return;
+    }
+    this.imagesData.forEach((imgPath, idx) => {
+      const wrapper = this.imagesContainer.createDiv({ cls: "issue-image-wrapper" });
+      const img = wrapper.createEl("img", {
+        cls: "issue-image-thumb"
+      });
+      const file = this.app.vault.getAbstractFileByPath(imgPath);
+      if (file instanceof import_obsidian.TFile) {
+        img.src = this.app.vault.getResourcePath(file);
+      }
+      img.addEventListener("click", () => {
+        const modal = new import_obsidian.Modal(this.app);
+        modal.onOpen = () => {
+          modal.contentEl.empty();
+          modal.contentEl.addClass("issue-image-preview-modal");
+          const fullImg = modal.contentEl.createEl("img", {
+            cls: "issue-image-full"
+          });
+          if (file instanceof import_obsidian.TFile) {
+            fullImg.src = this.app.vault.getResourcePath(file);
+          }
+          fullImg.style.maxWidth = "100%";
+          fullImg.style.maxHeight = "90vh";
+          const closeBtn = modal.contentEl.createEl("button", {
+            text: "\u5173\u95ED",
+            cls: "mod-cta"
+          });
+          closeBtn.style.marginTop = "10px";
+          closeBtn.addEventListener("click", () => modal.close());
+        };
+        modal.open();
+      });
+      const delBtn = wrapper.createEl("button", {
+        text: "\u5220\u9664",
+        cls: "issue-btn-sm issue-btn-danger"
+      });
+      delBtn.addEventListener("click", () => {
+        this.imagesData.splice(idx, 1);
+        this.renderImagePreviews();
+      });
+    });
+  }
   saveIssue() {
     var _a, _b, _c, _d;
     const title = this.titleInput.value.trim();
@@ -225,6 +375,7 @@ var IssueModal = class extends import_obsidian.Modal {
       discoverer,
       relatedPeople: this.relatedInput.value.trim(),
       orders: this.ordersData.filter((o) => o.orderNo.trim().length > 0),
+      images: this.imagesData,
       status: this.statusSelect.value,
       affectsProduction: this.affectsCheckbox.checked,
       solution: this.solutionTextarea.value.trim(),
@@ -423,6 +574,39 @@ var IssueTrackerView = class extends import_obsidian.ItemView {
       this.addDetailRow(detail, "\u76F8\u5173\u4EBA\u5458", issue.relatedPeople || "\u65E0");
       this.addDetailRow(detail, "\u53D7\u5F71\u54CD\u8BA2\u5355", formatOrdersText(issue.orders));
       this.addDetailRow(detail, "\u89E3\u51B3\u8FDB\u5EA6", issue.status);
+      if (issue.images && issue.images.length > 0) {
+        const imgRow = detail.createDiv({ cls: "issue-detail-row" });
+        imgRow.createEl("span", { text: "\u622A\u56FE\u9644\u4EF6", cls: "issue-detail-label" });
+        const imgContainer = imgRow.createDiv({ cls: "issue-detail-images" });
+        issue.images.forEach((imgPath) => {
+          const wrapper = imgContainer.createDiv({ cls: "issue-detail-img-wrapper" });
+          const img = wrapper.createEl("img", { cls: "issue-detail-img" });
+          const file = this.app.vault.getAbstractFileByPath(imgPath);
+          if (file instanceof import_obsidian.TFile) {
+            img.src = this.app.vault.getResourcePath(file);
+          }
+          img.addEventListener("click", () => {
+            const modal2 = new import_obsidian.Modal(this.app);
+            modal2.onOpen = () => {
+              modal2.contentEl.empty();
+              modal2.contentEl.addClass("issue-image-preview-modal");
+              const fullImg = modal2.contentEl.createEl("img", { cls: "issue-image-full" });
+              if (file instanceof import_obsidian.TFile) {
+                fullImg.src = this.app.vault.getResourcePath(file);
+              }
+              fullImg.style.maxWidth = "100%";
+              fullImg.style.maxHeight = "90vh";
+              const closeBtn2 = modal2.contentEl.createEl("button", {
+                text: "\u5173\u95ED",
+                cls: "mod-cta"
+              });
+              closeBtn2.style.marginTop = "10px";
+              closeBtn2.addEventListener("click", () => modal2.close());
+            };
+            modal2.open();
+          });
+        });
+      }
       this.addDetailRow(
         detail,
         "\u662F\u5426\u5F71\u54CD\u751F\u4EA7",
@@ -759,6 +943,14 @@ ${issue.solution || "\u6682\u65E0"}
 `;
       md += `- **\u6700\u540E\u66F4\u65B0**: ${issue.updatedAt}
 `;
+      if (issue.images && issue.images.length > 0) {
+        md += `- **\u622A\u56FE\u9644\u4EF6**:
+`;
+        issue.images.forEach((imgPath) => {
+          md += `  - ![](${imgPath})
+`;
+        });
+      }
       await this.app.vault.create(filePath, md);
     }
   }
