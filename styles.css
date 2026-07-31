@@ -341,3 +341,80 @@
   min-width: 140px;
   line-height: 1.6;
 }
+/* --- 图片附件表单 --- */
+.issue-images-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.issue-images-empty {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.issue-image-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary-alt);
+}
+
+.issue-image-thumb {
+  width: 80px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--background-modifier-border);
+}
+
+.issue-image-thumb:hover {
+  opacity: 0.8;
+}
+
+/* --- 详情弹窗图片 --- */
+.issue-detail-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+}
+
+.issue-detail-img-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.issue-detail-img {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--background-modifier-border);
+  transition: transform 0.1s;
+}
+
+.issue-detail-img:hover {
+  transform: scale(1.05);
+}
+
+/* --- 图片预览弹窗 --- */
+.issue-image-preview-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.issue-image-full {
+  border-radius: 6px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}

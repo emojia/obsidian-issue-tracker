@@ -1,7 +1,7 @@
 {
   "id": "issue-tracker",
   "name": "问题单追踪器",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "minAppVersion": "0.15.0",
   "description": "在生产环境中汇总管理问题单，记录问题描述、发现人、相关人员、订单信息、解决进度、是否影响生产及解决方案",
   "author": "issue-tracker",
